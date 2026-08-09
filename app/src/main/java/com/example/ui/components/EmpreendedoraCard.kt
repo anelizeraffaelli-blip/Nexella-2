@@ -77,22 +77,6 @@ fun EmpreendedoraCard(
                             .size(64.dp)
                             .clip(CircleShape)
                     )
-                    if (user.isFoundingMember) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .size(20.dp)
-                                .clip(CircleShape)
-                                .background(NexellaGold)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Stars,
-                                contentDescription = "Membro Fundadora",
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp).align(Alignment.Center)
-                            )
-                        }
-                    }
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -113,22 +97,6 @@ fun EmpreendedoraCard(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f)
                         )
-                        if (user.isFoundingMember) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(NexellaGoldLight)
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "Fundadora",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = NexellaGold,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                            }
-                        }
                     }
 
                     Text(

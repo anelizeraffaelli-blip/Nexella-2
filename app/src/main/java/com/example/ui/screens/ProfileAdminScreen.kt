@@ -172,22 +172,6 @@ fun ProfileAdminScreen(
                                 .size(80.dp)
                                 .clip(CircleShape)
                         )
-                        if (currentUser?.isFoundingMember == true) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .size(24.dp)
-                                    .clip(CircleShape)
-                                    .background(NexellaGold)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Stars,
-                                    contentDescription = "Fundadora",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp).align(Alignment.Center)
-                                )
-                            }
-                        }
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))

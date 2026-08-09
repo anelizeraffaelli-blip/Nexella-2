@@ -143,24 +143,6 @@ fun ProfileScreen(
                                     .clip(CircleShape)
                                     .border(4.dp, Color.White, CircleShape)
                             )
-                            if (isFoundingMember) {
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomEnd)
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(NexellaGold)
-                                        .border(2.dp, Color.White, CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Stars,
-                                        contentDescription = "Membro Fundadora",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
                         }
 
                         Column(
@@ -247,23 +229,6 @@ fun ProfileScreen(
                                         ),
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
                                     )
-                                }
-
-                                if (isFoundingMember) {
-                                    Surface(
-                                        shape = RoundedCornerShape(16.dp),
-                                        color = NexellaGold.copy(alpha = 0.15f),
-                                        border = BorderStroke(1.dp, NexellaGold)
-                                    ) {
-                                        Text(
-                                            text = "Membro Fundadora 👑",
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                color = Color(0xFF795548),
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                                        )
-                                    }
                                 }
                             }
                         }

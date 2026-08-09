@@ -135,7 +135,7 @@ fun NexellaHeader(
                                 .background(NexellaGold)
                         )
                         Text(
-                            text = if (currentUser?.isFoundingMember == true) "FUNDADORA" else "MEMBRO",
+                            text = "MEMBRO",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = NexellaGold,

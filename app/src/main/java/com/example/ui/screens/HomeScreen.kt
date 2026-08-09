@@ -239,14 +239,6 @@ fun HomeScreen(
             }
         }
 
-        // Real-Time Community Metrics Dashboard
-        item {
-            DashboardMetricsCard(
-                metricsState = dashboardMetrics,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
         // 3. Ella AI Assistant Inline Widget
         item {
             Card(
