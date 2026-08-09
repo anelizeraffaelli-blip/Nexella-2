@@ -1,17 +1,20 @@
-/**
- * Layer of service for Supabase integration (TypeScript interface placeholder).
- * In this Android Kotlin environment, the runtime service is handled by com.example.data.remote.SupabaseService.
- */
+import { createClient } from '@supabase/supabase-js';
 
-export const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://your-supabase-project.supabase.co';
-export const SUPABASE_PUBLISHABLE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'your-supabase-anon-key';
+export const SUPABASE_URL =
+  (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) ||
+  'https://your-supabase-project.supabase.co';
 
-export interface SupabaseConfig {
-  url: string;
-  anonKey: string;
-}
+export const SUPABASE_PUBLISHABLE_KEY =
+  (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_PUBLISHABLE_KEY) ||
+  'your-supabase-anon-key';
 
-export const supabaseConfig: SupabaseConfig = {
+export const supabaseConfig = {
   url: SUPABASE_URL,
   anonKey: SUPABASE_PUBLISHABLE_KEY,
 };
+
+/**
+ * Initialized Supabase client instance using VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.
+ * Exported for application-wide authentication, data access, and realtime queries.
+ */
+export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);

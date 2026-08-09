@@ -110,7 +110,7 @@ class SupabaseService {
                 val json = JSONObject(respStr)
                 val userObj = json.optJSONObject("user")
                 val uid = userObj?.optString("id") ?: json.optString("id")
-                val token = json.optString("access_token", null)
+                val token = if (json.has("access_token")) json.optString("access_token") else null
                 SupabaseAuthResult(success = true, userId = uid, email = email, token = token)
             } else {
                 val jsonErr = try { JSONObject(respStr) } catch (e: Exception) { null }

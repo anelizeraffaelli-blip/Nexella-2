@@ -1,0 +1,50 @@
+{
+  "short_name": "Nexella",
+  "name": "Nexella - Plataforma Inteligente de Empreendedorismo Feminino",
+  "description": "Conectando mulheres. Criando oportunidades. Plataforma inteligente para empreendedoras.",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FFF0F6",
+  "theme_color": "#9C27B0",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["business", "social", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Radar Nexella",
+      "short_name": "Radar",
+      "description": "Ver oportunidades de negócios",
+      "url": "/#radar",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Conexões",
+      "short_name": "Conexões",
+      "description": "Minhas conexões",
+      "url": "/#connections",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
