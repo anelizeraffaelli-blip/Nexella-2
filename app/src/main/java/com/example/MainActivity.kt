@@ -236,7 +236,9 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
                     messages = ellaMessages,
                     isLoading = isEllaLoading,
                     onSendMessage = { prompt -> viewModel.sendEllaPrompt(prompt) },
-                    onClose = { showEllaModal = false }
+                    onClose = { showEllaModal = false },
+                    onClearChat = { viewModel.clearEllaChat() },
+                    onShowToast = { msg -> viewModel.showMessage(msg) }
                 )
             }
 

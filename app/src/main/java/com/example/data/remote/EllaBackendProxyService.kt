@@ -216,7 +216,7 @@ class EllaBackendProxyService {
                 when (intent.category) {
                     IntentCategory.FIND_PARTNER -> "A usuária quer encontrar uma profissional/parceira. Busque a melhor empreendedora em Cascavel no contexto fornecido e apresente o match calorosamente com sugestão de contato via WhatsApp."
                     IntentCategory.RADAR_OPPORTUNITY -> "A usuária busca ou deseja publicar uma oportunidade no Radar. Indique oportunidades compatíveis ou convide-a a publicar sua demanda no Radar Nexella."
-                    IntentCategory.BUSINESS_ADVICE -> "Ofereça um conselho prático, estratégico e encorajador focado no empreendedorismo feminino local e networking."
+                    IntentCategory.BUSINESS_ADVICE -> "Ofereça um conselho de mentoria prático, estruturado e encorajador focado no empreendedorismo feminino em Cascavel. Estruture a resposta com: 💡 Visão Estratégica, 🚀 Passos Práticos de Ação, e 🤝 Sugestão de Conexão com a Comunidade Nexella."
                     IntentCategory.GENERAL -> "Responda de forma acolhedora, explicando como a Nexella pode impulsionar conexões reais entre mulheres em Cascavel."
                 }
             }

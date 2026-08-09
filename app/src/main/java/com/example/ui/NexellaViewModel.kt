@@ -360,6 +360,20 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun clearEllaChat() {
+        viewModelScope.launch {
+            repository.clearEllaMessages()
+            // Insert greeting message back
+            repository.insertEllaMessage(
+                EllaMessageEntity(
+                    sender = "ELLA",
+                    text = "Olá! Eu sou a Ella 💜 Mentora e Assistente AI da Nexella.\nEstou pronta para te dar conselhos de negócios, estratégias de precificação, parcerias locais e sugestões de conexões em Cascavel!"
+                )
+            )
+            _userMessage.value = "Conversa com Ella reiniciada."
+        }
+    }
+
     fun sendEllaIntent(userIntent: UserIntent) {
         if (userIntent.rawPrompt.isBlank()) return
         viewModelScope.launch {
