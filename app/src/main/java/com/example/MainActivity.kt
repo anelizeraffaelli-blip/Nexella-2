@@ -32,8 +32,10 @@ import androidx.compose.ui.Modifier
 import com.example.ui.NexellaViewModel
 import com.example.ui.components.ConnectionSuccessDialog
 import com.example.ui.components.CreateOpportunityDialog
+import com.example.ui.components.EditProfileDialog
 import com.example.ui.components.NexellaBottomNav
 import com.example.ui.components.NexellaHeader
+import com.example.ui.components.NexellaResponsiveLayout
 import com.example.ui.components.RegisterUserDialog
 import com.example.ui.components.SyncProgressBar
 import com.example.ui.screens.CommunityScreen
@@ -125,21 +127,9 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
     var showEllaModal by remember { mutableStateOf(false) }
     var showCreateOppModal by remember { mutableStateOf(false) }
     var showRegisterModal by remember { mutableStateOf(false) }
+    var showEditProfileModal by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = {
-            Column {
-                NexellaHeader(
-                    currentUser = currentUser,
-                    onOpenElla = { showEllaModal = true },
-                    onOpenProfile = { viewModel.selectTab(4) }
-                )
-                SyncProgressBar(
-                    isSyncing = isSupabaseSyncing,
-                    statusText = supabaseStatusText
-                )
-            }
-        },
         snackbarHost = {
             SnackbarHost(
                 hostState = snackbarHostState,
@@ -211,109 +201,120 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
                     }
                 }
             }
-        },
-        bottomBar = {
-            NexellaBottomNav(
-                selectedTab = currentTab,
-                onTabSelected = { viewModel.selectTab(it) }
-            )
         }
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            AnimatedVisibility(
-                visible = showEllaModal,
-                enter = fadeIn(animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)) +
-                        scaleIn(initialScale = 0.90f, animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 250, easing = FastOutLinearInEasing)) +
-                       scaleOut(targetScale = 0.95f, animationSpec = tween(durationMillis = 250, easing = FastOutLinearInEasing))
-            ) {
-                // ELLA Dedicated Fullscreen/Dialog UI
-                EllaAssistantScreen(
-                    messages = ellaMessages,
-                    isLoading = isEllaLoading,
-                    onSendMessage = { prompt -> viewModel.sendEllaPrompt(prompt) },
-                    onClose = { showEllaModal = false },
-                    onClearChat = { viewModel.clearEllaChat() },
-                    onShowToast = { msg -> viewModel.showMessage(msg) }
-                )
-            }
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            SyncProgressBar(
+                isSyncing = isSupabaseSyncing,
+                statusText = supabaseStatusText
+            )
 
-            AnimatedVisibility(
-                visible = !showEllaModal,
-                enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 200))
-            ) {
-                Crossfade(targetState = currentTab, label = "tab_fade") { tab ->
-                    when (tab) {
-                        0 -> HomeScreen(
-                            currentUser = currentUser,
-                            opportunities = opportunitiesList,
-                            meetings = meetingsList,
-                            onNavigateTab = { viewModel.selectTab(it) },
-                            onOpenCreateOpportunity = { showCreateOppModal = true },
-                            onOpenElla = { showEllaModal = true },
-                            onOpenRegister = { showRegisterModal = true },
-                            onCreateConnectionWithUser = { user ->
-                                viewModel.createConnection(user, "Página Inicial")
-                            },
-                            onJoinMeeting = { meeting ->
-                                viewModel.joinMeeting(meeting.id)
-                            },
-                            onFilterNeighborhood = { neighborhood ->
-                                viewModel.updateNeighborhoodFilter(neighborhood)
-                            },
-                            isLoading = isLoadingData
+            NexellaResponsiveLayout(
+                selectedTab = currentTab,
+                onTabSelected = { viewModel.selectTab(it) },
+                currentUser = currentUser,
+                onOpenElla = { showEllaModal = true },
+                onOpenProfile = { viewModel.selectTab(4) },
+                modifier = Modifier.weight(1f)
+            ) { responsivePadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(responsivePadding)
+                ) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = showEllaModal,
+                        enter = fadeIn(animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)) +
+                                scaleIn(initialScale = 0.90f, animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)),
+                        exit = fadeOut(animationSpec = tween(durationMillis = 250, easing = FastOutLinearInEasing)) +
+                               scaleOut(targetScale = 0.95f, animationSpec = tween(durationMillis = 250, easing = FastOutLinearInEasing))
+                    ) {
+                        // ELLA Dedicated Fullscreen/Dialog UI
+                        EllaAssistantScreen(
+                            messages = ellaMessages,
+                            isLoading = isEllaLoading,
+                            onSendMessage = { prompt -> viewModel.sendEllaPrompt(prompt) },
+                            onClose = { showEllaModal = false },
+                            onClearChat = { viewModel.clearEllaChat() },
+                            onShowToast = { msg -> viewModel.showMessage(msg) }
                         )
+                    }
 
-                        1 -> CommunityScreen(
-                            users = usersList,
-                            searchQuery = searchQuery,
-                            selectedNeighborhood = selectedNeighborhood,
-                            selectedCategory = selectedCategory,
-                            isImobiliarioOnly = isImobiliarioOnly,
-                            onSearchQueryChange = { viewModel.updateSearchQuery(it) },
-                            onNeighborhoodSelect = { viewModel.updateNeighborhoodFilter(it) },
-                            onCategorySelect = { viewModel.updateCategoryFilter(it) },
-                            onToggleImobiliario = { viewModel.toggleImobiliarioOnly(it) },
-                            onCreateConnection = { user ->
-                                viewModel.createConnection(user, "Comunidade Nexella")
-                            },
-                            isLoading = isLoadingData
-                        )
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = !showEllaModal,
+                        enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+                        exit = fadeOut(animationSpec = tween(durationMillis = 200))
+                    ) {
+                        Crossfade(targetState = currentTab, label = "tab_fade") { tab ->
+                            when (tab) {
+                                0 -> HomeScreen(
+                                    currentUser = currentUser,
+                                    opportunities = opportunitiesList,
+                                    meetings = meetingsList,
+                                    onNavigateTab = { viewModel.selectTab(it) },
+                                    onOpenCreateOpportunity = { showCreateOppModal = true },
+                                    onOpenElla = { showEllaModal = true },
+                                    onOpenRegister = { showRegisterModal = true },
+                                    onCreateConnectionWithUser = { user ->
+                                        viewModel.createConnection(user, "Página Inicial")
+                                    },
+                                    onJoinMeeting = { meeting ->
+                                        viewModel.joinMeeting(meeting.id)
+                                    },
+                                    onFilterNeighborhood = { neighborhood ->
+                                        viewModel.updateNeighborhoodFilter(neighborhood)
+                                    },
+                                    isLoading = isLoadingData
+                                )
 
-                        2 -> ConnectionsScreen(
-                            connections = connectionsList,
-                            opportunities = opportunitiesList,
-                            onOpenCreateOpportunity = { showCreateOppModal = true },
-                            onUpdateConnectionImpact = { id, impact ->
-                                viewModel.updateConnectionImpact(id, impact)
-                            },
-                            initialSubTab = 0
-                        )
+                                1 -> CommunityScreen(
+                                    users = usersList,
+                                    searchQuery = searchQuery,
+                                    selectedNeighborhood = selectedNeighborhood,
+                                    selectedCategory = selectedCategory,
+                                    isImobiliarioOnly = isImobiliarioOnly,
+                                    onSearchQueryChange = { viewModel.updateSearchQuery(it) },
+                                    onNeighborhoodSelect = { viewModel.updateNeighborhoodFilter(it) },
+                                    onCategorySelect = { viewModel.updateCategoryFilter(it) },
+                                    onToggleImobiliario = { viewModel.toggleImobiliarioOnly(it) },
+                                    onCreateConnection = { user ->
+                                        viewModel.createConnection(user, "Comunidade Nexella")
+                                    },
+                                    isLoading = isLoadingData
+                                )
 
-                        3 -> ConnectionsScreen(
-                            connections = connectionsList,
-                            opportunities = opportunitiesList,
-                            onOpenCreateOpportunity = { showCreateOppModal = true },
-                            onUpdateConnectionImpact = { id, impact ->
-                                viewModel.updateConnectionImpact(id, impact)
-                            },
-                            initialSubTab = 1
-                        )
+                                2 -> ConnectionsScreen(
+                                    connections = connectionsList,
+                                    opportunities = opportunitiesList,
+                                    onOpenCreateOpportunity = { showCreateOppModal = true },
+                                    onUpdateConnectionImpact = { id, impact ->
+                                        viewModel.updateConnectionImpact(id, impact)
+                                    },
+                                    initialSubTab = 0
+                                )
 
-                        4 -> ProfileAdminScreen(
-                            currentUser = currentUser,
-                            allUsers = adminUsersList,
-                            adminMetrics = adminMetrics,
-                            onSwitchUser = { viewModel.switchCurrentUser(it) },
-                            onOpenRegisterModal = { showRegisterModal = true },
-                            onApproveUser = { viewModel.adminApproveUser(it) },
-                            onSuspendUser = { viewModel.adminSuspendUser(it) }
-                        )
+                                3 -> ConnectionsScreen(
+                                    connections = connectionsList,
+                                    opportunities = opportunitiesList,
+                                    onOpenCreateOpportunity = { showCreateOppModal = true },
+                                    onUpdateConnectionImpact = { id, impact ->
+                                        viewModel.updateConnectionImpact(id, impact)
+                                    },
+                                    initialSubTab = 1
+                                )
+
+                                4 -> ProfileAdminScreen(
+                                    currentUser = currentUser,
+                                    allUsers = adminUsersList,
+                                    adminMetrics = adminMetrics,
+                                    onSwitchUser = { viewModel.switchCurrentUser(it) },
+                                    onOpenRegisterModal = { showRegisterModal = true },
+                                    onOpenEditProfileModal = { showEditProfileModal = true },
+                                    onApproveUser = { viewModel.adminApproveUser(it) },
+                                    onSuspendUser = { viewModel.adminSuspendUser(it) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -353,6 +354,21 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
                     viewModel.loginUser(emailOrName) { _, _ -> }
                 },
                 isSubmitting = isActionLoading
+            )
+        }
+
+        // 4. Edit Profile Dialog (Supabase + Local Room DB Persistence)
+        val activeUser = currentUser
+        if (showEditProfileModal && activeUser != null) {
+            EditProfileDialog(
+                currentUser = activeUser,
+                onDismiss = { showEditProfileModal = false },
+                onSaveProfile = { updatedUser ->
+                    viewModel.updateUserProfile(updatedUser)
+                    showEditProfileModal = false
+                },
+                isSubmitting = isActionLoading,
+                isSupabaseConfigured = viewModel.isSupabaseConfigured
             )
         }
     }

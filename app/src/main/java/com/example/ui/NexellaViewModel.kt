@@ -526,6 +526,55 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun updateUserProfile(updatedUser: UserEntity) {
+        viewModelScope.launch {
+            _isActionLoading.value = true
+            try {
+                repository.updateUser(updatedUser)
+                _currentUser.value = updatedUser
+
+                // Update ProfileEntity for Room local DB & Supabase sync
+                val profile = ProfileEntity(
+                    userId = updatedUser.id,
+                    name = updatedUser.name,
+                    city = updatedUser.city,
+                    neighborhood = updatedUser.neighborhood,
+                    businessName = updatedUser.businessName,
+                    category = updatedUser.category,
+                    email = updatedUser.email,
+                    bio = updatedUser.description,
+                    instagram = updatedUser.instagram,
+                    whatsapp = updatedUser.whatsapp
+                )
+                repository.updateProfile(profile)
+
+                // Update BusinessEntity for Room local DB & Supabase sync
+                val business = BusinessEntity(
+                    userId = updatedUser.id,
+                    name = updatedUser.businessName,
+                    category = updatedUser.category,
+                    neighborhood = updatedUser.neighborhood,
+                    city = updatedUser.city,
+                    description = updatedUser.description,
+                    services = updatedUser.services,
+                    instagram = updatedUser.instagram,
+                    isImobiliario = updatedUser.isCorretora
+                )
+                repository.updateBusiness(business)
+
+                if (repository.supabaseService.isConfigured()) {
+                    _supabaseStatusText.value = "Perfil sincronizado com o Supabase DB ✨"
+                }
+
+                _userMessage.value = "Perfil de ${updatedUser.name} atualizado e sincronizado com sucesso! 💖"
+            } catch (e: Exception) {
+                _userMessage.value = "Erro ao atualizar perfil: ${e.localizedMessage ?: "Tente novamente"}"
+            } finally {
+                _isActionLoading.value = false
+            }
+        }
+    }
+
     fun adminApproveUser(userId: Long) {
         viewModelScope.launch {
             val user = repository.getUserById(userId)

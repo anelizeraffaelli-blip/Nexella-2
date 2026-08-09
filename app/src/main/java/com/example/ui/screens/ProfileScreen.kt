@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Info
@@ -67,6 +68,7 @@ fun ProfileScreen(
     onConnectClick: ((UserEntity) -> Unit)? = null,
     onOpenWhatsapp: ((String) -> Unit)? = null,
     onOpenInstagram: ((String) -> Unit)? = null,
+    onEditProfileClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     // Determine details from UserEntity or fallback to ProfileEntity
@@ -228,6 +230,33 @@ fun ProfileScreen(
                                             fontWeight = FontWeight.Bold
                                         ),
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+
+                            if (onEditProfileClick != null) {
+                                Spacer(modifier = Modifier.height(14.dp))
+                                OutlinedButton(
+                                    onClick = onEditProfileClick,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(44.dp)
+                                        .testTag("profile_edit_button"),
+                                    shape = RoundedCornerShape(12.dp),
+                                    border = BorderStroke(1.5.dp, NexellaPurple)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Editar Perfil",
+                                        tint = NexellaPurple,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Editar Meu Perfil (Supabase DB)",
+                                        color = NexellaPurple,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp
                                     )
                                 }
                             }

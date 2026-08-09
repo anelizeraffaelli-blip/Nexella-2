@@ -75,6 +75,7 @@ fun ProfileAdminScreen(
     adminMetrics: AdminMetrics,
     onSwitchUser: (UserEntity) -> Unit,
     onOpenRegisterModal: () -> Unit,
+    onOpenEditProfileModal: (() -> Unit)? = null,
     onApproveUser: (Long) -> Unit,
     onSuspendUser: (Long) -> Unit,
     modifier: Modifier = Modifier
@@ -125,7 +126,10 @@ fun ProfileAdminScreen(
         }
 
         if (selectedSubTab == 0) {
-            ProfileScreen(user = currentUser)
+            ProfileScreen(
+                user = currentUser,
+                onEditProfileClick = onOpenEditProfileModal
+            )
         } else {
             LazyColumn(
                 modifier = Modifier
@@ -242,13 +246,33 @@ fun ProfileAdminScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Button(
-                        onClick = onOpenRegisterModal,
-                        modifier = Modifier.fillMaxWidth().testTag("profile_register_modal_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = NexellaPurple),
-                        shape = RoundedCornerShape(10.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Cadastrar Nova Empreendedora")
+                        if (onOpenEditProfileModal != null) {
+                            androidx.compose.material3.OutlinedButton(
+                                onClick = onOpenEditProfileModal,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("admin_edit_profile_button"),
+                                shape = RoundedCornerShape(10.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.5.dp, NexellaPurple)
+                            ) {
+                                Text("Editar Perfil Ativo", color = NexellaPurple, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        }
+
+                        Button(
+                            onClick = onOpenRegisterModal,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("profile_register_modal_button"),
+                            colors = ButtonDefaults.buttonColors(containerColor = NexellaPurple),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Cadastrar Nova", fontSize = 13.sp)
+                        }
                     }
                 }
             }
