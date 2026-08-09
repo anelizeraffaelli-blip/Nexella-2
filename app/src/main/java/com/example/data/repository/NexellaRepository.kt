@@ -9,10 +9,15 @@ import com.example.data.local.entity.MeetingParticipantEntity
 import com.example.data.local.entity.OpportunityEntity
 import com.example.data.local.entity.ProfileEntity
 import com.example.data.local.entity.UserEntity
+import com.example.data.remote.SupabaseAuthResult
+import com.example.data.remote.SupabaseService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
-class NexellaRepository(private val dao: NexellaDao) {
+class NexellaRepository(
+    private val dao: NexellaDao,
+    val supabaseService: SupabaseService = SupabaseService()
+) {
 
     val allUsers: Flow<List<UserEntity>> = dao.getApprovedUsers()
     val allAdminUsers: Flow<List<UserEntity>> = dao.getAllUsers()
@@ -38,21 +43,105 @@ class NexellaRepository(private val dao: NexellaDao) {
     fun getProfileByUserId(userId: Long): Flow<ProfileEntity?> = dao.getProfileByUserId(userId)
     fun getOpportunitiesByCityAndNeighborhood(city: String, neighborhood: String): Flow<List<OpportunityEntity>> =
         dao.getOpportunitiesByCityAndNeighborhood(city, neighborhood)
-    suspend fun insertProfile(profile: ProfileEntity) = dao.insertProfile(profile)
-    suspend fun updateProfile(profile: ProfileEntity) = dao.updateProfile(profile)
+    suspend fun insertProfile(profile: ProfileEntity): Long {
+        val id = dao.insertProfile(profile)
+        if (supabaseService.isConfigured()) {
+            supabaseService.upsertProfile(profile.copy(id = id))
+        }
+        return id
+    }
+
+    suspend fun updateProfile(profile: ProfileEntity) {
+        dao.updateProfile(profile)
+        if (supabaseService.isConfigured()) {
+            supabaseService.upsertProfile(profile)
+        }
+    }
+
     suspend fun deleteProfile(id: Long) = dao.deleteProfile(id)
 
     fun getBusinessByUserId(userId: Long): Flow<BusinessEntity?> = dao.getBusinessByUserId(userId)
-    suspend fun insertBusiness(business: BusinessEntity) = dao.insertBusiness(business)
-    suspend fun updateBusiness(business: BusinessEntity) = dao.updateBusiness(business)
+    suspend fun insertBusiness(business: BusinessEntity): Long {
+        val id = dao.insertBusiness(business)
+        if (supabaseService.isConfigured()) {
+            supabaseService.upsertBusiness(business.copy(id = id))
+        }
+        return id
+    }
+
+    suspend fun updateBusiness(business: BusinessEntity) {
+        dao.updateBusiness(business)
+        if (supabaseService.isConfigured()) {
+            supabaseService.upsertBusiness(business)
+        }
+    }
+
     suspend fun deleteBusiness(id: Long) = dao.deleteBusiness(id)
 
-    suspend fun insertOpportunity(opp: OpportunityEntity) = dao.insertOpportunity(opp)
+    suspend fun insertOpportunity(opp: OpportunityEntity): Long {
+        val id = dao.insertOpportunity(opp)
+        if (supabaseService.isConfigured()) {
+            supabaseService.createOpportunity(opp.copy(id = id))
+        }
+        return id
+    }
+
     suspend fun updateOpportunity(opp: OpportunityEntity) = dao.updateOpportunity(opp)
     suspend fun deleteOpportunity(id: Long) = dao.deleteOpportunity(id)
 
-    suspend fun insertConnection(connection: ConnectionEntity) = dao.insertConnection(connection)
+    suspend fun insertConnection(connection: ConnectionEntity): Long {
+        val id = dao.insertConnection(connection)
+        if (supabaseService.isConfigured()) {
+            supabaseService.createConnection(connection.copy(id = id))
+        }
+        return id
+    }
+
     suspend fun updateConnection(connection: ConnectionEntity) = dao.updateConnection(connection)
+
+    suspend fun syncRemoteData() {
+        if (!supabaseService.isConfigured()) return
+
+        // 1. Fetch remote opportunities (Radar Nexella)
+        val remoteOpps = supabaseService.fetchOpportunities()
+        if (!remoteOpps.isNullOrEmpty()) {
+            remoteOpps.forEach { opp ->
+                dao.insertOpportunity(opp)
+            }
+        }
+
+        // 2. Fetch remote profiles
+        val remoteProfiles = supabaseService.fetchProfiles()
+        if (!remoteProfiles.isNullOrEmpty()) {
+            remoteProfiles.forEach { prof ->
+                dao.insertProfile(prof)
+            }
+        }
+
+        // 3. Fetch remote businesses
+        val remoteBusinesses = supabaseService.fetchBusinesses()
+        if (!remoteBusinesses.isNullOrEmpty()) {
+            remoteBusinesses.forEach { bus ->
+                dao.insertBusiness(bus)
+            }
+        }
+
+        // 4. Fetch remote connections
+        val remoteConns = supabaseService.fetchConnections()
+        if (!remoteConns.isNullOrEmpty()) {
+            remoteConns.forEach { conn ->
+                dao.insertConnection(conn)
+            }
+        }
+
+        // 5. Fetch remote events/meetings
+        val remoteEvents = supabaseService.fetchEvents()
+        if (!remoteEvents.isNullOrEmpty()) {
+            remoteEvents.forEach { meeting ->
+                dao.insertMeeting(meeting)
+            }
+        }
+    }
 
     suspend fun insertMeeting(meeting: MeetingEntity) = dao.insertMeeting(meeting)
     suspend fun getParticipantsForMeeting(meetingId: Long) = dao.getParticipantsForMeeting(meetingId)

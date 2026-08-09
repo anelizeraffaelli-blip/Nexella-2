@@ -37,6 +37,15 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
     private val repository: NexellaRepository
     private val ellaService = EllaAiService()
 
+    private val _isSupabaseSyncing = MutableStateFlow(false)
+    val isSupabaseSyncing: StateFlow<Boolean> = _isSupabaseSyncing.asStateFlow()
+
+    private val _supabaseStatusText = MutableStateFlow("Pendente verificação")
+    val supabaseStatusText: StateFlow<String> = _supabaseStatusText.asStateFlow()
+
+    val isSupabaseConfigured: Boolean
+        get() = repository.supabaseService.isConfigured()
+
     init {
         val dao = NexellaDatabase.getDatabase(application).nexellaDao()
         repository = NexellaRepository(dao)
@@ -44,6 +53,26 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             repository.seedInitialDataIfNeeded()
             loadCurrentLoggedInUser()
+            syncWithSupabase()
+        }
+    }
+
+    fun syncWithSupabase() {
+        viewModelScope.launch {
+            if (repository.supabaseService.isConfigured()) {
+                _isSupabaseSyncing.value = true
+                _supabaseStatusText.value = "Sincronizando com Supabase em tempo real..."
+                try {
+                    repository.syncRemoteData()
+                    _supabaseStatusText.value = "Supabase Conectado (Dados reais ativas)"
+                } catch (e: Exception) {
+                    _supabaseStatusText.value = "Modo Fallback Local (Room DB)"
+                } finally {
+                    _isSupabaseSyncing.value = false
+                }
+            } else {
+                _supabaseStatusText.value = "Modo Desenvolvimento (Fallback Room DB)"
+            }
         }
     }
 
@@ -303,6 +332,13 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
         password: String = ""
     ) {
         viewModelScope.launch {
+            if (email.isNotBlank() && password.isNotBlank() && repository.supabaseService.isConfigured()) {
+                val authRes = repository.supabaseService.signUp(email, password, name)
+                if (authRes.success) {
+                    _supabaseStatusText.value = "Usuária registrada no Supabase Auth"
+                }
+            }
+
             val newUser = UserEntity(
                 name = name,
                 photoUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
@@ -327,7 +363,7 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
             )
             val newId = repository.insertUser(newUser)
 
-            // Save to ProfileEntity in Room database
+            // Save to ProfileEntity in Room database and sync to Supabase
             val newProfile = ProfileEntity(
                 userId = newId,
                 name = name,
@@ -342,7 +378,7 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
             )
             repository.insertProfile(newProfile)
 
-            // Save to BusinessEntity in Room database
+            // Save to BusinessEntity in Room database and sync to Supabase
             val newBusiness = BusinessEntity(
                 userId = newId,
                 name = businessName,
@@ -363,6 +399,13 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
 
     fun loginUser(emailOrName: String, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
+            if (emailOrName.contains("@") && repository.supabaseService.isConfigured()) {
+                val authRes = repository.supabaseService.signIn(emailOrName, "123456")
+                if (authRes.success) {
+                    _supabaseStatusText.value = "Autenticada via Supabase Auth"
+                }
+            }
+
             val users = repository.allAdminUsers.first()
             val found = users.find {
                 it.email.equals(emailOrName, ignoreCase = true) ||
