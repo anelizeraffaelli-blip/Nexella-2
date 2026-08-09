@@ -18,9 +18,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -68,7 +70,8 @@ fun RegisterUserDialog(
         email: String,
         password: String
     ) -> Unit,
-    onLogin: ((emailOrName: String) -> Unit)? = null
+    onLogin: ((emailOrName: String) -> Unit)? = null,
+    isSubmitting: Boolean = false
 ) {
     var isRegisterTab by remember { mutableStateOf(true) }
 
@@ -412,7 +415,7 @@ fun RegisterUserDialog(
 
                     Button(
                         onClick = {
-                            if (name.isNotBlank() && businessName.isNotBlank()) {
+                            if (name.isNotBlank() && businessName.isNotBlank() && !isSubmitting) {
                                 onRegister(
                                     name,
                                     businessName,
@@ -432,14 +435,23 @@ fun RegisterUserDialog(
                                 onDismiss()
                             }
                         },
+                        enabled = !isSubmitting,
                         modifier = Modifier.fillMaxWidth().testTag("submit_register_button"),
                         colors = ButtonDefaults.buttonColors(containerColor = NexellaPurple),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text(
-                            text = "Salvar Perfil e Fazer Parte →",
-                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                        )
+                        if (isSubmitting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Salvar Perfil e Fazer Parte →",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
                     }
                 } else {
                     // --- LOGIN FORM ---
@@ -478,19 +490,28 @@ fun RegisterUserDialog(
 
                     Button(
                         onClick = {
-                            if (loginInput.isNotBlank()) {
+                            if (loginInput.isNotBlank() && !isSubmitting) {
                                 onLogin?.invoke(loginInput)
                                 onDismiss()
                             }
                         },
+                        enabled = !isSubmitting,
                         modifier = Modifier.fillMaxWidth().testTag("submit_login_button"),
                         colors = ButtonDefaults.buttonColors(containerColor = NexellaPurple),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text(
-                            text = "Acessar Plataforma →",
-                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                        )
+                        if (isSubmitting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Acessar Plataforma →",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
                     }
                 }
             }

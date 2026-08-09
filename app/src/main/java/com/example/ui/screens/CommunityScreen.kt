@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.local.entity.UserEntity
 import com.example.ui.components.EmpreendedoraCard
+import com.example.ui.components.EmpreendedoraCardSkeleton
 import com.example.ui.theme.NexellaGold
 import com.example.ui.theme.NexellaPurple
 import com.example.ui.theme.NexellaPurpleLight
@@ -64,6 +65,7 @@ fun CommunityScreen(
     onCategorySelect: (String) -> Unit,
     onToggleImobiliario: (Boolean) -> Unit,
     onCreateConnection: (UserEntity) -> Unit,
+    isLoading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var categoryExpanded by remember { mutableStateOf(false) }
@@ -254,7 +256,11 @@ fun CommunityScreen(
         }
 
         // Empreendedora Cards List
-        if (users.isEmpty()) {
+        if (isLoading && users.isEmpty()) {
+            items(3) {
+                EmpreendedoraCardSkeleton()
+            }
+        } else if (users.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier

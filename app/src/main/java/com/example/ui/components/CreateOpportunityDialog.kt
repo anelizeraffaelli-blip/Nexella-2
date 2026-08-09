@@ -15,9 +15,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -53,7 +55,8 @@ fun CreateOpportunityDialog(
         neighborhood: String,
         type: String,
         isImobiliario: Boolean
-    ) -> Unit
+    ) -> Unit,
+    isSubmitting: Boolean = false
 ) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -259,7 +262,7 @@ fun CreateOpportunityDialog(
 
                 Button(
                     onClick = {
-                        if (title.isNotBlank()) {
+                        if (title.isNotBlank() && !isSubmitting) {
                             onCreateOpportunity(
                                 title,
                                 description,
@@ -271,14 +274,23 @@ fun CreateOpportunityDialog(
                             onDismiss()
                         }
                     },
+                    enabled = !isSubmitting,
                     modifier = Modifier.fillMaxWidth().testTag("submit_opportunity_button"),
                     colors = ButtonDefaults.buttonColors(containerColor = NexellaPurple),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text(
-                        text = "Publicar Oportunidade",
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                    )
+                    if (isSubmitting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Publicar Oportunidade",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
                 }
             }
         }

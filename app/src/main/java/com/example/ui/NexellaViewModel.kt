@@ -43,17 +43,41 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
     private val _supabaseStatusText = MutableStateFlow("Pendente verificação")
     val supabaseStatusText: StateFlow<String> = _supabaseStatusText.asStateFlow()
 
+    private val _userMessage = MutableStateFlow<String?>(null)
+    val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
+
+    private val _isLoadingData = MutableStateFlow(true)
+    val isLoadingData: StateFlow<Boolean> = _isLoadingData.asStateFlow()
+
+    private val _isActionLoading = MutableStateFlow(false)
+    val isActionLoading: StateFlow<Boolean> = _isActionLoading.asStateFlow()
+
     val isSupabaseConfigured: Boolean
         get() = repository.supabaseService.isConfigured()
+
+    fun showMessage(message: String) {
+        _userMessage.value = message
+    }
+
+    fun clearMessage() {
+        _userMessage.value = null
+    }
 
     init {
         val dao = NexellaDatabase.getDatabase(application).nexellaDao()
         repository = NexellaRepository(dao)
 
         viewModelScope.launch {
-            repository.seedInitialDataIfNeeded()
-            loadCurrentLoggedInUser()
-            syncWithSupabase()
+            _isLoadingData.value = true
+            try {
+                repository.seedInitialDataIfNeeded()
+                loadCurrentLoggedInUser()
+                syncWithSupabase()
+            } catch (e: Exception) {
+                _userMessage.value = "Aviso: Carregando banco local. (${e.localizedMessage ?: "Erro de inicialização"})"
+            } finally {
+                _isLoadingData.value = false
+            }
         }
     }
 
@@ -67,6 +91,7 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
                     _supabaseStatusText.value = "Supabase Conectado (Dados reais ativas)"
                 } catch (e: Exception) {
                     _supabaseStatusText.value = "Modo Fallback Local (Room DB)"
+                    _userMessage.value = "Modo offline ativado: usando dados locais de Cascavel."
                 } finally {
                     _isSupabaseSyncing.value = false
                 }
@@ -211,31 +236,44 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
 
     fun createConnection(recipient: UserEntity, origin: String, notes: String = "") {
         viewModelScope.launch {
-            val user = _currentUser.value ?: return@launch
-            val conn = ConnectionEntity(
-                requesterId = user.id,
-                requesterName = user.name,
-                recipientId = recipient.id,
-                recipientName = recipient.name,
-                recipientBusiness = recipient.businessName,
-                recipientPhoto = recipient.photoUrl,
-                recipientCategory = recipient.category,
-                recipientWhatsapp = recipient.whatsapp,
-                recipientNeighborhood = recipient.neighborhood,
-                date = "Hoje",
-                origin = origin,
-                notes = notes
-            )
-            repository.insertConnection(conn)
-            _latestCreatedConnection.value = conn
+            _isActionLoading.value = true
+            try {
+                val user = _currentUser.value ?: return@launch
+                val conn = ConnectionEntity(
+                    requesterId = user.id,
+                    requesterName = user.name,
+                    recipientId = recipient.id,
+                    recipientName = recipient.name,
+                    recipientBusiness = recipient.businessName,
+                    recipientPhoto = recipient.photoUrl,
+                    recipientCategory = recipient.category,
+                    recipientWhatsapp = recipient.whatsapp,
+                    recipientNeighborhood = recipient.neighborhood,
+                    date = "Hoje",
+                    origin = origin,
+                    notes = notes
+                )
+                repository.insertConnection(conn)
+                _latestCreatedConnection.value = conn
+                _userMessage.value = "Conexão iniciada com ${recipient.name}!"
+            } catch (e: Exception) {
+                _userMessage.value = "Erro ao criar conexão: ${e.localizedMessage ?: "Tente novamente"}"
+            } finally {
+                _isActionLoading.value = false
+            }
         }
     }
 
     fun updateConnectionImpact(connectionId: Long, resultedInOpportunity: Boolean) {
         viewModelScope.launch {
-            val conn = repository.allConnections.first().find { it.id == connectionId }
-            if (conn != null) {
-                repository.updateConnection(conn.copy(generatedOpportunity = resultedInOpportunity))
+            try {
+                val conn = repository.allConnections.first().find { it.id == connectionId }
+                if (conn != null) {
+                    repository.updateConnection(conn.copy(generatedOpportunity = resultedInOpportunity))
+                    _userMessage.value = "Impacto da conexão atualizado com sucesso!"
+                }
+            } catch (e: Exception) {
+                _userMessage.value = "Erro ao atualizar impacto: ${e.localizedMessage}"
             }
         }
     }
@@ -249,29 +287,45 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
         isImobiliario: Boolean
     ) {
         viewModelScope.launch {
-            val user = _currentUser.value ?: return@launch
-            val opp = OpportunityEntity(
-                title = title,
-                description = description,
-                category = category,
-                city = "Cascavel",
-                neighborhood = neighborhood,
-                authorId = user.id,
-                authorName = user.name,
-                authorBusiness = user.businessName,
-                authorPhoto = user.photoUrl,
-                type = type,
-                isImobiliario = isImobiliario,
-                status = "Aprovada"
-            )
-            repository.insertOpportunity(opp)
+            _isActionLoading.value = true
+            try {
+                val user = _currentUser.value ?: return@launch
+                val opp = OpportunityEntity(
+                    title = title,
+                    description = description,
+                    category = category,
+                    city = "Cascavel",
+                    neighborhood = neighborhood,
+                    authorId = user.id,
+                    authorName = user.name,
+                    authorBusiness = user.businessName,
+                    authorPhoto = user.photoUrl,
+                    type = type,
+                    isImobiliario = isImobiliario,
+                    status = "Aprovada"
+                )
+                repository.insertOpportunity(opp)
+                _userMessage.value = "Oportunidade publicada no Radar Nexella! 🚀"
+            } catch (e: Exception) {
+                _userMessage.value = "Erro ao publicar oportunidade: ${e.localizedMessage ?: "Verifique sua conexão."}"
+            } finally {
+                _isActionLoading.value = false
+            }
         }
     }
 
     fun joinMeeting(meetingId: Long) {
         viewModelScope.launch {
-            val user = _currentUser.value ?: return@launch
-            repository.joinMeeting(meetingId, user)
+            _isActionLoading.value = true
+            try {
+                val user = _currentUser.value ?: return@launch
+                repository.joinMeeting(meetingId, user)
+                _userMessage.value = "Presença confirmada no encontro com sucesso! 🤝"
+            } catch (e: Exception) {
+                _userMessage.value = "Erro ao confirmar presença: ${e.localizedMessage}"
+            } finally {
+                _isActionLoading.value = false
+            }
         }
     }
 
@@ -281,17 +335,28 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
             repository.insertEllaMessage(EllaMessageEntity(sender = "USER", text = text))
             _isEllaLoading.value = true
 
-            val allUsers = repository.allUsers.first()
-            val allOpps = repository.allOpportunities.first()
+            try {
+                val allUsers = repository.allUsers.first()
+                val allOpps = repository.allOpportunities.first()
 
-            val ellaReply = ellaService.queryElla(
-                userPrompt = text,
-                usersInDb = allUsers,
-                opportunitiesInDb = allOpps
-            )
+                val ellaReply = ellaService.queryElla(
+                    userPrompt = text,
+                    usersInDb = allUsers,
+                    opportunitiesInDb = allOpps
+                )
 
-            repository.insertEllaMessage(EllaMessageEntity(sender = "ELLA", text = ellaReply))
-            _isEllaLoading.value = false
+                repository.insertEllaMessage(EllaMessageEntity(sender = "ELLA", text = ellaReply))
+            } catch (e: Exception) {
+                _userMessage.value = "Não foi possível obter resposta da Ella. Tente novamente."
+                repository.insertEllaMessage(
+                    EllaMessageEntity(
+                        sender = "ELLA",
+                        text = "Tive uma oscilação na conexão com a inteligência em nuvem. Por favor, tente novamente em instantes! 💜"
+                    )
+                )
+            } finally {
+                _isEllaLoading.value = false
+            }
         }
     }
 
@@ -301,17 +366,22 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
             repository.insertEllaMessage(EllaMessageEntity(sender = "USER", text = userIntent.rawPrompt))
             _isEllaLoading.value = true
 
-            val allUsers = repository.allUsers.first()
-            val allOpps = repository.allOpportunities.first()
+            try {
+                val allUsers = repository.allUsers.first()
+                val allOpps = repository.allOpportunities.first()
 
-            val ellaResponse = ellaService.sendUserIntent(
-                userIntent = userIntent,
-                usersInDb = allUsers,
-                opportunitiesInDb = allOpps
-            )
+                val ellaResponse = ellaService.sendUserIntent(
+                    userIntent = userIntent,
+                    usersInDb = allUsers,
+                    opportunitiesInDb = allOpps
+                )
 
-            repository.insertEllaMessage(EllaMessageEntity(sender = "ELLA", text = ellaResponse.replyText))
-            _isEllaLoading.value = false
+                repository.insertEllaMessage(EllaMessageEntity(sender = "ELLA", text = ellaResponse.replyText))
+            } catch (e: Exception) {
+                _userMessage.value = "Erro no processamento da Ella. Tente novamente."
+            } finally {
+                _isEllaLoading.value = false
+            }
         }
     }
 
@@ -332,91 +402,112 @@ class NexellaViewModel(application: Application) : AndroidViewModel(application)
         password: String = ""
     ) {
         viewModelScope.launch {
-            if (email.isNotBlank() && password.isNotBlank() && repository.supabaseService.isConfigured()) {
-                val authRes = repository.supabaseService.signUp(email, password, name)
-                if (authRes.success) {
-                    _supabaseStatusText.value = "Usuária registrada no Supabase Auth"
+            _isActionLoading.value = true
+            try {
+                if (email.isNotBlank() && password.isNotBlank() && repository.supabaseService.isConfigured()) {
+                    val authRes = repository.supabaseService.signUp(email, password, name)
+                    if (authRes.success) {
+                        _supabaseStatusText.value = "Usuária registrada no Supabase Auth"
+                    }
                 }
+
+                val newUser = UserEntity(
+                    name = name,
+                    photoUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+                    businessName = businessName,
+                    city = "Cascavel",
+                    neighborhood = neighborhood,
+                    category = category,
+                    services = services,
+                    description = description,
+                    instagram = instagram,
+                    whatsapp = whatsapp,
+                    email = email,
+                    password = password,
+                    allowWhatsapp = true,
+                    status = "Aprovado",
+                    creci = creci,
+                    specialities = services,
+                    procuro = procuro,
+                    ofereco = ofereco,
+                    isFoundingMember = true,
+                    isCorretora = isCorretora
+                )
+                val newId = repository.insertUser(newUser)
+
+                // Save to ProfileEntity in Room database and sync to Supabase
+                val newProfile = ProfileEntity(
+                    userId = newId,
+                    name = name,
+                    city = "Cascavel",
+                    neighborhood = neighborhood,
+                    businessName = businessName,
+                    category = category,
+                    email = email,
+                    bio = description,
+                    instagram = instagram,
+                    whatsapp = whatsapp
+                )
+                repository.insertProfile(newProfile)
+
+                // Save to BusinessEntity in Room database and sync to Supabase
+                val newBusiness = BusinessEntity(
+                    userId = newId,
+                    name = businessName,
+                    category = category,
+                    neighborhood = neighborhood,
+                    city = "Cascavel",
+                    description = description,
+                    services = services,
+                    instagram = instagram,
+                    isImobiliario = isCorretora
+                )
+                repository.insertBusiness(newBusiness)
+
+                val activeUser = newUser.copy(id = newId)
+                _currentUser.value = activeUser
+                _userMessage.value = "Seja muito bem-vinda à Nexella, ${name}! 🎉"
+            } catch (e: Exception) {
+                _userMessage.value = "Erro ao cadastrar perfil: ${e.localizedMessage ?: "Verifique seus dados."}"
+            } finally {
+                _isActionLoading.value = false
             }
-
-            val newUser = UserEntity(
-                name = name,
-                photoUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
-                businessName = businessName,
-                city = "Cascavel",
-                neighborhood = neighborhood,
-                category = category,
-                services = services,
-                description = description,
-                instagram = instagram,
-                whatsapp = whatsapp,
-                email = email,
-                password = password,
-                allowWhatsapp = true,
-                status = "Aprovado",
-                creci = creci,
-                specialities = services,
-                procuro = procuro,
-                ofereco = ofereco,
-                isFoundingMember = true,
-                isCorretora = isCorretora
-            )
-            val newId = repository.insertUser(newUser)
-
-            // Save to ProfileEntity in Room database and sync to Supabase
-            val newProfile = ProfileEntity(
-                userId = newId,
-                name = name,
-                city = "Cascavel",
-                neighborhood = neighborhood,
-                businessName = businessName,
-                category = category,
-                email = email,
-                bio = description,
-                instagram = instagram,
-                whatsapp = whatsapp
-            )
-            repository.insertProfile(newProfile)
-
-            // Save to BusinessEntity in Room database and sync to Supabase
-            val newBusiness = BusinessEntity(
-                userId = newId,
-                name = businessName,
-                category = category,
-                neighborhood = neighborhood,
-                city = "Cascavel",
-                description = description,
-                services = services,
-                instagram = instagram,
-                isImobiliario = isCorretora
-            )
-            repository.insertBusiness(newBusiness)
-
-            val activeUser = newUser.copy(id = newId)
-            _currentUser.value = activeUser
         }
     }
 
     fun loginUser(emailOrName: String, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
-            if (emailOrName.contains("@") && repository.supabaseService.isConfigured()) {
-                val authRes = repository.supabaseService.signIn(emailOrName, "123456")
-                if (authRes.success) {
-                    _supabaseStatusText.value = "Autenticada via Supabase Auth"
+            _isActionLoading.value = true
+            try {
+                if (emailOrName.contains("@") && repository.supabaseService.isConfigured()) {
+                    val authRes = repository.supabaseService.signIn(emailOrName, "123456")
+                    if (authRes.success) {
+                        _supabaseStatusText.value = "Autenticada via Supabase Auth"
+                    }
                 }
-            }
 
-            val users = repository.allAdminUsers.first()
-            val found = users.find {
-                it.email.equals(emailOrName, ignoreCase = true) ||
-                it.name.contains(emailOrName, ignoreCase = true) ||
-                it.businessName.contains(emailOrName, ignoreCase = true)
-            }
-            if (found != null) {
-                _currentUser.value = found
-                onResult(true, "Bem-vinda de volta, ${found.name}!")
-            } else {
-                onResult(false, "Usuária não encontrada. Cadastre seu perfil e faça parte da Nexella!")
+                val users = repository.allAdminUsers.first()
+                val found = users.find {
+                    it.email.equals(emailOrName, ignoreCase = true) ||
+                    it.name.contains(emailOrName, ignoreCase = true) ||
+                    it.businessName.contains(emailOrName, ignoreCase = true)
+                }
+                if (found != null) {
+                    _currentUser.value = found
+                    val successMsg = "Bem-vinda de volta, ${found.name}!"
+                    _userMessage.value = successMsg
+                    onResult(true, successMsg)
+                } else {
+                    val errMsg = "Usuária não encontrada. Cadastre seu perfil e faça parte da Nexella!"
+                    _userMessage.value = errMsg
+                    onResult(false, errMsg)
+                }
+            } catch (e: Exception) {
+                val errMsg = "Erro no login: ${e.localizedMessage ?: "Tente novamente"}"
+                _userMessage.value = errMsg
+                onResult(false, errMsg)
+            } finally {
+                _isActionLoading.value = false
             }
         }
     }

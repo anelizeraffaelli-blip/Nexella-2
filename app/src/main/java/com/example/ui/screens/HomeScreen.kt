@@ -67,6 +67,8 @@ import com.example.data.local.entity.MeetingEntity
 import com.example.data.local.entity.OpportunityEntity
 import com.example.data.local.entity.UserEntity
 import com.example.ui.components.MeetingCard
+import com.example.ui.components.MeetingCardSkeleton
+import com.example.ui.components.OpportunityCardSkeleton
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.DashboardViewModel
@@ -87,6 +89,7 @@ fun HomeScreen(
     onCreateConnectionWithUser: (UserEntity) -> Unit,
     onJoinMeeting: (MeetingEntity) -> Unit,
     onFilterNeighborhood: ((String) -> Unit)? = null,
+    isLoading: Boolean = false,
     dashboardViewModel: DashboardViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -703,24 +706,30 @@ fun HomeScreen(
         }
 
         // Radar Cards
-        items(opportunities.take(2)) { opp ->
-            OpportunityCard(
-                opportunity = opp,
-                onInterestClick = { onCreateConnectionWithUser(UserEntity(
-                    id = 999,
-                    name = opp.authorName,
-                    businessName = opp.authorBusiness,
-                    category = opp.category,
-                    neighborhood = opp.neighborhood,
-                    services = "Oportunidade no Radar",
-                    description = opp.description,
-                    instagram = "@nexella",
-                    whatsapp = "45999887766",
-                    photoUrl = opp.authorPhoto,
-                    procuro = opp.title,
-                    ofereco = opp.type
-                )) }
-            )
+        if (isLoading && opportunities.isEmpty()) {
+            items(2) {
+                OpportunityCardSkeleton()
+            }
+        } else {
+            items(opportunities.take(2)) { opp ->
+                OpportunityCard(
+                    opportunity = opp,
+                    onInterestClick = { onCreateConnectionWithUser(UserEntity(
+                        id = 999,
+                        name = opp.authorName,
+                        businessName = opp.authorBusiness,
+                        category = opp.category,
+                        neighborhood = opp.neighborhood,
+                        services = "Oportunidade no Radar",
+                        description = opp.description,
+                        instagram = "@nexella",
+                        whatsapp = "45999887766",
+                        photoUrl = opp.authorPhoto,
+                        procuro = opp.title,
+                        ofereco = opp.type
+                    )) }
+                )
+            }
         }
 
         // 8. Encontros Presenciais Header
@@ -753,11 +762,17 @@ fun HomeScreen(
             }
         }
 
-        items(meetings.take(1)) { meeting ->
-            MeetingCard(
-                meeting = meeting,
-                onJoinClick = { onJoinMeeting(meeting) }
-            )
+        if (isLoading && meetings.isEmpty()) {
+            items(1) {
+                MeetingCardSkeleton()
+            }
+        } else {
+            items(meetings.take(1)) { meeting ->
+                MeetingCard(
+                    meeting = meeting,
+                    onJoinClick = { onJoinMeeting(meeting) }
+                )
+            }
         }
 
         // 9. Contador Vivo (Real Platform Statistics)

@@ -19,7 +19,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +35,7 @@ import com.example.ui.components.CreateOpportunityDialog
 import com.example.ui.components.NexellaBottomNav
 import com.example.ui.components.NexellaHeader
 import com.example.ui.components.RegisterUserDialog
+import com.example.ui.components.SyncProgressBar
 import com.example.ui.screens.CommunityScreen
 import com.example.ui.screens.ConnectionsScreen
 import com.example.ui.screens.EllaAssistantScreen
@@ -102,6 +106,21 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val isImobiliarioOnly by viewModel.isImobiliarioOnly.collectAsState()
 
+    val userMessage by viewModel.userMessage.collectAsState()
+    val isSupabaseSyncing by viewModel.isSupabaseSyncing.collectAsState()
+    val supabaseStatusText by viewModel.supabaseStatusText.collectAsState()
+    val isLoadingData by viewModel.isLoadingData.collectAsState()
+    val isActionLoading by viewModel.isActionLoading.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(userMessage) {
+        userMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearMessage()
+        }
+    }
+
     // Dialog state controllers
     var showEllaModal by remember { mutableStateOf(false) }
     var showCreateOppModal by remember { mutableStateOf(false) }
@@ -109,10 +128,22 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
 
     Scaffold(
         topBar = {
-            NexellaHeader(
-                currentUser = currentUser,
-                onOpenElla = { showEllaModal = true },
-                onOpenProfile = { viewModel.selectTab(4) }
+            Column {
+                NexellaHeader(
+                    currentUser = currentUser,
+                    onOpenElla = { showEllaModal = true },
+                    onOpenProfile = { viewModel.selectTab(4) }
+                )
+                SyncProgressBar(
+                    isSyncing = isSupabaseSyncing,
+                    statusText = supabaseStatusText
+                )
+            }
+        },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.testTag("app_snackbar_host")
             )
         },
         floatingActionButton = {
@@ -232,7 +263,8 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
                             },
                             onFilterNeighborhood = { neighborhood ->
                                 viewModel.updateNeighborhoodFilter(neighborhood)
-                            }
+                            },
+                            isLoading = isLoadingData
                         )
 
                         1 -> CommunityScreen(
@@ -247,7 +279,8 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
                             onToggleImobiliario = { viewModel.toggleImobiliarioOnly(it) },
                             onCreateConnection = { user ->
                                 viewModel.createConnection(user, "Comunidade Nexella")
-                            }
+                            },
+                            isLoading = isLoadingData
                         )
 
                         2 -> ConnectionsScreen(
@@ -300,7 +333,8 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
                 onDismiss = { showCreateOppModal = false },
                 onCreateOpportunity = { title, desc, cat, neigh, type, imob ->
                     viewModel.createOpportunity(title, desc, cat, neigh, type, imob)
-                }
+                },
+                isSubmitting = isActionLoading
             )
         }
 
@@ -315,7 +349,8 @@ fun NexellaMainApp(viewModel: NexellaViewModel) {
                 },
                 onLogin = { emailOrName ->
                     viewModel.loginUser(emailOrName) { _, _ -> }
-                }
+                },
+                isSubmitting = isActionLoading
             )
         }
     }
