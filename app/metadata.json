@@ -1,0 +1,6 @@
+{
+  "name": "Nexella",
+  "description": "Plataforma inteligente de conexões para mulheres empreendedoras de Cascavel e região.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
